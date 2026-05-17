@@ -12,7 +12,7 @@ export async function generateItinerary(PROMPT) {
 
   const textResponse = response.text;
 
-  console.log("Generated response:", textResponse);
+  // console.log("Generated response:", textResponse);
 
   return textResponse;
 }
