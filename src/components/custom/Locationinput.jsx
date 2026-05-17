@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 
 function LocationInput({ onSelect }) {
+
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
   const [show, setShow] = useState(false);
@@ -10,12 +11,16 @@ function LocationInput({ onSelect }) {
 
   // REMOVE DUPLICATES
   const removeDuplicates = (places) => {
+
     const seen = new Set();
 
     return places.filter((place) => {
-      const key = `${place.name}-${place.state}-${place.country}`;
 
-      if (seen.has(key)) return false;
+      const key =
+        `${place.name}-${place.state}-${place.country}`;
+
+      if (seen.has(key))
+        return false;
 
       seen.add(key);
 
@@ -23,43 +28,77 @@ function LocationInput({ onSelect }) {
     });
   };
 
-  // PROCESS + SCORE RESULTS
+  // PROCESS RESULTS
   const processResults = (data, value) => {
 
-    if (!data?.features) return [];
+    if (!data?.features)
+      return [];
 
-    const q = value.toLowerCase();
+    const q =
+      value.toLowerCase();
 
-    const processed = data.features
-      .map((place) => {
+    const processed =
+      data.features
 
-        const p = place.properties;
+        .map((place) => {
 
-        let score = 0;
+          const p =
+            place.properties;
 
-        if (p.country === "India") score += 2;
+          let score = 0;
 
-        if (p.name?.toLowerCase().startsWith(q))
-          score += 3;
+          if (p.country === "India")
+            score += 2;
 
-        if (p.name?.toLowerCase().includes(q))
-          score += 1;
+          if (
+            p.name
+              ?.toLowerCase()
+              .startsWith(q)
+          )
+            score += 3;
 
-        return {
-          name: p.name,
-          state: p.state || p.county || "",
-          country: p.country,
-          full: `${p.name}, ${p.state || ""}, ${p.country}`,
-          lat: place.geometry.coordinates[1],
-          lon: place.geometry.coordinates[0],
-          id: `${p.name}-${place.geometry.coordinates[0]}-${place.geometry.coordinates[1]}`,
-          score,
-        };
-      })
+          if (
+            p.name
+              ?.toLowerCase()
+              .includes(q)
+          )
+            score += 1;
 
-      .sort((a, b) => b.score - a.score);
+          return {
 
-    return removeDuplicates(processed).slice(0, 5);
+            name: p.name,
+
+            state:
+              p.state ||
+              p.county ||
+              "",
+
+            country:
+              p.country,
+
+            full:
+              `${p.name}, ${p.state || ""}, ${p.country}`,
+
+            lat:
+              place.geometry.coordinates[1],
+
+            lon:
+              place.geometry.coordinates[0],
+
+            id:
+              `${p.name}-${place.geometry.coordinates[0]}-${place.geometry.coordinates[1]}`,
+
+            score,
+          };
+        })
+
+        .sort(
+          (a, b) =>
+            b.score - a.score
+        );
+
+    return removeDuplicates(processed)
+      .slice(0, 5);
   };
 
   // FETCH LOCATIONS
@@ -69,53 +108,80 @@ function LocationInput({ onSelect }) {
 
     setActiveIndex(-1);
 
-    clearTimeout(timeoutRef.current);
+    clearTimeout(
+      timeoutRef.current
+    );
 
-    timeoutRef.current = setTimeout(async () => {
+    timeoutRef.current =
+      setTimeout(async () => {
 
-      if (value.length < 3) {
+        // MINIMUM 3 CHARS
+        if (value.length < 3) {
 
-        setResults([]);
+          setResults([]);
 
-        setShow(false);
+          setShow(false);
 
-        return;
-      }
-
-      try {
-
-        const res = await fetch(
-          `/api/location?q=${encodeURIComponent(value)}`
-        );
-
-        if (!res.ok) {
-          throw new Error("Failed to fetch locations");
+          return;
         }
 
-        const data = await res.json();
+        try {
 
-        const cleaned = processResults(data, value);
+          const res =
+            await fetch(
+              `/api/location?q=${encodeURIComponent(value)}`
+            );
 
-        setResults(cleaned);
+          if (!res.ok) {
 
-        setShow(cleaned.length > 0);
+            throw new Error(
+              "Failed to fetch locations"
+            );
+          }
 
-      } catch (error) {
+          const data =
+            await res.json();
 
-        console.error(
-          "Location fetch error:",
-          error
-        );
+          const cleaned =
+            processResults(
+              data,
+              value
+            );
 
-        setResults([]);
+          setResults(cleaned);
 
-        setShow(false);
-      }
+          setShow(
+            cleaned.length > 0
+          );
 
-    }, 300);
+        } catch (error) {
+
+          console.error(
+            "Location fetch error:",
+            error
+          );
+
+          // FALLBACK MANUAL OPTION
+          setResults([
+            {
+              name: value,
+              state: "",
+              country: "",
+              full: value,
+              lat: null,
+              lon: null,
+              id: value,
+              score: 1,
+            },
+          ]);
+
+          setShow(true);
+        }
+
+      }, 300);
   };
 
-  // SELECT LOCATION
+  // SELECT PLACE
   const handleSelect = (place) => {
 
     setQuery(place.full);
@@ -124,19 +190,25 @@ function LocationInput({ onSelect }) {
 
     setActiveIndex(-1);
 
-    onSelect && onSelect(place);
+    onSelect &&
+      onSelect(place);
   };
 
   // KEYBOARD NAVIGATION
   const handleKeyDown = (e) => {
 
-    if (!show) return;
+    if (!show)
+      return;
 
     if (e.key === "ArrowDown") {
 
       setActiveIndex((prev) =>
-        prev < results.length - 1
+
+        prev <
+        results.length - 1
+
           ? prev + 1
+
           : prev
       );
     }
@@ -144,7 +216,12 @@ function LocationInput({ onSelect }) {
     if (e.key === "ArrowUp") {
 
       setActiveIndex((prev) =>
-        prev > 0 ? prev - 1 : 0
+
+        prev > 0
+
+          ? prev - 1
+
+          : 0
       );
     }
 
@@ -170,7 +247,8 @@ function LocationInput({ onSelect }) {
 
     setActiveIndex(-1);
 
-    onSelect && onSelect(null);
+    onSelect &&
+      onSelect(null);
   };
 
   return (
@@ -181,14 +259,24 @@ function LocationInput({ onSelect }) {
 
         <input
           value={query}
+
           onChange={(e) =>
-            fetchPlaces(e.target.value)
+            fetchPlaces(
+              e.target.value
+            )
           }
+
           onFocus={() =>
-            results.length && setShow(true)
+            results.length &&
+            setShow(true)
           }
-          onKeyDown={handleKeyDown}
+
+          onKeyDown={
+            handleKeyDown
+          }
+
           placeholder="Search location..."
+
           className="w-full h-10 border border-gray-300 rounded-lg px-3 pr-10 outline-none focus:ring-2 focus:ring-gray-300"
         />
 
@@ -196,6 +284,7 @@ function LocationInput({ onSelect }) {
 
           <button
             onClick={clearInput}
+
             className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 font-bold text-lg hover:text-black"
           >
             ✕
@@ -205,39 +294,45 @@ function LocationInput({ onSelect }) {
 
       </div>
 
-      {show && results.length > 0 && (
+      {show &&
+        results.length > 0 && (
 
         <ul className="absolute w-full bg-white border mt-1 rounded-lg shadow-lg max-h-60 overflow-y-auto z-50">
 
-          {results.map((place, i) => (
+          {results.map(
+            (place, i) => (
 
-            <li
-              key={place.id}
-              onClick={() =>
-                handleSelect(place)
-              }
-              className={`p-3 cursor-pointer ${
-                i === activeIndex
-                  ? "bg-gray-200"
-                  : "hover:bg-gray-100"
-              }`}
-            >
+              <li
+                key={place.id}
 
-              <div className="font-medium">
-                {place.name}
-              </div>
+                onClick={() =>
+                  handleSelect(place)
+                }
 
-              <div className="text-sm text-gray-500">
-                {place.state},{" "}
-                {place.country}
-              </div>
+                className={`p-3 cursor-pointer ${
+                  i === activeIndex
+                    ? "bg-gray-200"
+                    : "hover:bg-gray-100"
+                }`}
+              >
 
-            </li>
+                <div className="font-medium">
+                  {place.name}
+                </div>
 
-          ))}
+                <div className="text-sm text-gray-500">
+
+                  {place.state},
+                  {" "}
+                  {place.country}
+
+                </div>
+
+              </li>
+            )
+          )}
 
         </ul>
-
       )}
 
     </div>
