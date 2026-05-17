@@ -13,17 +13,20 @@ export default async function handler(req, res) {
     const response = await fetch(
       `https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=10`,
       {
+        method: "GET",
         headers: {
-          "User-Agent": "Rover-App",
+          "User-Agent": "Mozilla/5.0",
           "Accept": "application/json",
         },
       }
     );
 
     if (!response.ok) {
-      throw new Error(
-        `Photon API error: ${response.status}`
-      );
+
+      return res.status(response.status).json({
+        error: `Photon API responded with status ${response.status}`,
+      });
+
     }
 
     const data = await response.json();
@@ -32,7 +35,7 @@ export default async function handler(req, res) {
 
   } catch (error) {
 
-    console.error(error);
+    console.error("SERVER ERROR:", error);
 
     return res.status(500).json({
       error: "Failed to fetch locations",
